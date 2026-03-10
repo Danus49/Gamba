@@ -1,0 +1,10 @@
+{
+  "users": {
+    "Danus": {
+      "coins": 1000,
+      "admin": true,
+      "password": "Danus123"
+    }
+  },
+  "bets": []
+}
