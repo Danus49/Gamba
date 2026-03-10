@@ -2,44 +2,70 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Class Betting</title>
+<title>Class Betting v2</title>
 <style>
-body { font-family: sans-serif; margin:20px; }
-button { margin:5px; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f4f8;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+.container {
+  max-width: 600px;
+  width: 90%;
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 12px;
+  margin-top: 40px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+h1 { text-align: center; color: #2c3e50; }
+h2, h3 { color: #34495e; }
+input { width: calc(100% - 20px); padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; }
+button { background-color: #3498db; color: white; padding: 8px 16px; margin: 5px 0; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+button:hover { background-color: #2980b9; }
+#bets-list div { background: #ecf0f1; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+#bets-list button { background-color: #2ecc71; }
+#bets-list button:hover { background-color: #27ae60; }
+#coins { font-weight: bold; color: #e67e22; }
+#leaderboard { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; }
 </style>
 </head>
 <body>
+<div class="container">
 
-<h1>Class Betting</h1>
+<h1>Class Betting v2</h1>
 
 <div id="login-section">
-<h2>Login / Register</h2>
-<input id="username" placeholder="Your name">
-<button onclick="login()">Login / Register</button>
+  <h2>Login / Register</h2>
+  <input id="username" placeholder="Your name">
+  <button onclick="login()">Login / Register</button>
 </div>
 
 <div id="dashboard" style="display:none;">
-<h2>Welcome <span id="user-name"></span></h2>
-<p>Coins: <span id="coins"></span></p>
+  <h2>Welcome <span id="user-name"></span></h2>
+  <p>Coins: <span id="coins"></span></p>
 
-<h3>Admin Panel</h3>
-<input id="new-bet" placeholder="New bet question">
-<button onclick="createBet()">Create Bet</button>
+  <h3>Admin Panel</h3>
+  <input id="new-bet" placeholder="New bet question">
+  <button onclick="createBet()">Create Bet</button>
+  <button onclick="lockAllBets()">Lock All Bets</button>
 
-<h3>Bets</h3>
-<div id="bets-list"></div>
+  <h3>Bets</h3>
+  <div id="bets-list"></div>
+
+  <h3>Leaderboard</h3>
+  <div id="leaderboard"></div>
 </div>
 
 <script>
-// ---------------------
-// Data storage
-// ---------------------
+// ---------- DATA STORAGE ----------
 if(!localStorage.users) localStorage.users = JSON.stringify({});
 if(!localStorage.bets) localStorage.bets = JSON.stringify([]);
 
-// ---------------------
-// Login / Register
-// ---------------------
+// ---------- LOGIN / REGISTER ----------
 let currentUser = null;
 
 function login(){
@@ -59,58 +85,83 @@ function login(){
   document.getElementById("coins").innerText = users[currentUser].coins;
 
   loadBets();
+  loadLeaderboard();
 }
 
-// ---------------------
-// Admin: create bet
-// ---------------------
+// ---------- ADMIN: CREATE BET ----------
 function createBet(){
   if(!currentUser) return;
   let users = JSON.parse(localStorage.users);
-  if(!users[currentUser].admin) alert("You are not admin");
+  if(!users[currentUser].admin) { alert("You are not admin"); return; }
 
   let title = document.getElementById("new-bet").value.trim();
   if(!title) return;
   let bets = JSON.parse(localStorage.bets);
-  bets.push({title:title, pool:0});
+  bets.push({title:title, pool:0, locked:false});
   localStorage.bets = JSON.stringify(bets);
   document.getElementById("new-bet").value="";
   loadBets();
 }
 
-// ---------------------
-// Display bets
-// ---------------------
+// ---------- ADMIN: LOCK ALL BETS ----------
+function lockAllBets(){
+  if(!currentUser) return;
+  let users = JSON.parse(localStorage.users);
+  if(!users[currentUser].admin) { alert("You are not admin"); return; }
+
+  let bets = JSON.parse(localStorage.bets);
+  bets.forEach(b => b.locked = true);
+  localStorage.bets = JSON.stringify(bets);
+  loadBets();
+}
+
+// ---------- DISPLAY BETS ----------
 function loadBets(){
   let bets = JSON.parse(localStorage.bets);
   let html = "";
   bets.forEach((b,i)=>{
-    html += `<div>${b.title} | Pool: ${b.pool} <button onclick="placeBet(${i})">Bet 10</button></div>`;
+    let btn = b.locked ? "<button disabled>Locked</button>" : `<button onclick="placeBet(${i})">Bet 10</button>`;
+    html += `<div>${b.title} | Pool: ${b.pool} ${btn}</div>`;
   });
   document.getElementById("bets-list").innerHTML = html;
 }
 
-// ---------------------
-// Place bet
-// ---------------------
+// ---------- PLACE BET ----------
 function placeBet(index){
   let users = JSON.parse(localStorage.users);
+  let bets = JSON.parse(localStorage.bets);
+  if(bets[index].locked) return alert("This bet is locked!");
   if(users[currentUser].coins < 10) return alert("Not enough coins");
 
   users[currentUser].coins -= 10;
   localStorage.users = JSON.stringify(users);
 
-  let bets = JSON.parse(localStorage.bets);
   bets[index].pool += 10;
   localStorage.bets = JSON.stringify(bets);
 
   document.getElementById("coins").innerText = users[currentUser].coins;
   loadBets();
+  loadLeaderboard();
 }
 
-// ---------------------
-// Make first user admin (optional)
-// ---------------------
+// ---------- LEADERBOARD ----------
+function loadLeaderboard(){
+  let users = JSON.parse(localStorage.users);
+  let arr = [];
+  for(let u in users){
+    arr.push({name:u, coins:users[u].coins});
+  }
+  arr.sort((a,b)=>b.coins-a.coins);
+
+  let html = "<ol>";
+  arr.forEach(u=>{
+    html += `<li>${u.name} - ${u.coins} coins</li>`;
+  });
+  html += "</ol>";
+  document.getElementById("leaderboard").innerHTML = html;
+}
+
+// ---------- MAKE FIRST USER ADMIN ----------
 window.onload = ()=>{
   let users = JSON.parse(localStorage.users);
   if(!users["admin"]){
@@ -120,5 +171,6 @@ window.onload = ()=>{
 }
 </script>
 
+</div>
 </body>
 </html>
