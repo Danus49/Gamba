@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Class Betting</title>
+<style>
+body { font-family: sans-serif; margin:20px; }
+button { margin:5px; }
+</style>
+</head>
+<body>
+
+<h1>Class Betting</h1>
+
+<div id="login-section">
+<h2>Login / Register</h2>
+<input id="username" placeholder="Your name">
+<button onclick="login()">Login / Register</button>
+</div>
+
+<div id="dashboard" style="display:none;">
+<h2>Welcome <span id="user-name"></span></h2>
+<p>Coins: <span id="coins"></span></p>
+
+<h3>Admin Panel</h3>
+<input id="new-bet" placeholder="New bet question">
+<button onclick="createBet()">Create Bet</button>
+
+<h3>Bets</h3>
+<div id="bets-list"></div>
+</div>
+
+<script>
+// ---------------------
+// Data storage
+// ---------------------
+if(!localStorage.users) localStorage.users = JSON.stringify({});
+if(!localStorage.bets) localStorage.bets = JSON.stringify([]);
+
+// ---------------------
+// Login / Register
+// ---------------------
+let currentUser = null;
+
+function login(){
+  const name = document.getElementById("username").value.trim();
+  if(!name) return alert("Enter your name");
+
+  let users = JSON.parse(localStorage.users);
+  if(!users[name]){
+    users[name] = {coins:100, admin:false};
+    localStorage.users = JSON.stringify(users);
+  }
+
+  currentUser = name;
+  document.getElementById("login-section").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("user-name").innerText = currentUser;
+  document.getElementById("coins").innerText = users[currentUser].coins;
+
+  loadBets();
+}
+
+// ---------------------
+// Admin: create bet
+// ---------------------
+function createBet(){
+  if(!currentUser) return;
+  let users = JSON.parse(localStorage.users);
+  if(!users[currentUser].admin) alert("You are not admin");
+
+  let title = document.getElementById("new-bet").value.trim();
+  if(!title) return;
+  let bets = JSON.parse(localStorage.bets);
+  bets.push({title:title, pool:0});
+  localStorage.bets = JSON.stringify(bets);
+  document.getElementById("new-bet").value="";
+  loadBets();
+}
+
+// ---------------------
+// Display bets
+// ---------------------
+function loadBets(){
+  let bets = JSON.parse(localStorage.bets);
+  let html = "";
+  bets.forEach((b,i)=>{
+    html += `<div>${b.title} | Pool: ${b.pool} <button onclick="placeBet(${i})">Bet 10</button></div>`;
+  });
+  document.getElementById("bets-list").innerHTML = html;
+}
+
+// ---------------------
+// Place bet
+// ---------------------
+function placeBet(index){
+  let users = JSON.parse(localStorage.users);
+  if(users[currentUser].coins < 10) return alert("Not enough coins");
+
+  users[currentUser].coins -= 10;
+  localStorage.users = JSON.stringify(users);
+
+  let bets = JSON.parse(localStorage.bets);
+  bets[index].pool += 10;
+  localStorage.bets = JSON.stringify(bets);
+
+  document.getElementById("coins").innerText = users[currentUser].coins;
+  loadBets();
+}
+
+// ---------------------
+// Make first user admin (optional)
+// ---------------------
+window.onload = ()=>{
+  let users = JSON.parse(localStorage.users);
+  if(!users["admin"]){
+    users["admin"] = {coins:1000, admin:true};
+    localStorage.users = JSON.stringify(users);
+  }
+}
+</script>
+
+</body>
+</html>
