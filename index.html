@@ -2,22 +2,29 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Class Betting Fix Login</title>
+<title>Class Betting v8</title>
 <style>
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f0f4f8; margin:0; padding:0; display:flex; justify-content:center; }
 .container { max-width:600px; width:90%; background:#fff; padding:20px 30px; border-radius:12px; margin-top:40px; box-shadow:0 8px 20px rgba(0,0,0,0.1); }
 h1 { text-align:center; color:#2c3e50; }
+h2,h3,h4 { color:#34495e; }
 input { width: calc(100% - 20px); padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:6px; }
 button { background-color:#3498db; color:white; padding:8px 16px; margin:5px 0; border:none; border-radius:6px; cursor:pointer; }
 button:hover { background-color:#2980b9; }
+#bets-list div { background:#ecf0f1; padding:10px; border-radius:6px; margin-bottom:8px; display:flex; justify-content:space-between; flex-wrap:wrap; }
+#bets-list button { background-color:#2ecc71; margin-right:5px; margin-top:5px; }
+#bets-list button:hover { background-color:#27ae60; }
+#coins { font-weight:bold; color:#e67e22; }
+#leaderboard { background:#fff3cd; padding:10px; border-radius:6px; margin-top:10px; }
+.admin-panel { background:#dff0ff; padding:10px; border-radius:6px; margin-bottom:10px; }
 a { cursor:pointer; color:#3498db; }
-#dashboard, #register-section { display:none; }
+#register-section, #dashboard { display:none; }
 </style>
 </head>
 <body>
 <div class="container">
 
-<h1>Class Betting</h1>
+<h1>Class Betting v8</h1>
 
 <!-- LOGIN -->
 <div id="login-section">
@@ -43,54 +50,68 @@ a { cursor:pointer; color:#3498db; }
 <div id="dashboard">
   <h2>Welcome <span id="user-name"></span></h2>
   <p>Coins: <span id="coins"></span></p>
-  <div id="admin-section">
+
+  <!-- ADMIN PANEL -->
+  <div id="admin-section" class="admin-panel">
     <h3>Admin Panel</h3>
-    <input id="new-question" placeholder="Question">
-    <input id="answer1" placeholder="Answer 1">
-    <input id="answer2" placeholder="Answer 2">
-    <button onclick="addBet()">Add Bet</button>
-    <button onclick="lockAllBets()">Lock All Bets</button>
+    <div style="margin-bottom:10px;">
+      <input id="new-question" placeholder="Question">
+      <input id="answer1" placeholder="Answer 1">
+      <input id="answer2" placeholder="Answer 2">
+      <button onclick="addBet()">Add Bet</button>
+      <button onclick="lockAllBets()">Lock All Bets</button>
+    </div>
+    <div style="margin-top:10px;">
+      <h4>Set Coins for User</h4>
+      <input id="set-coins-username" placeholder="Username">
+      <input id="set-coins-value" type="number" placeholder="Coins">
+      <button onclick="setCoins()">Set Coins</button>
+      <p id="set-coins-status" style="color:red;"></p>
+    </div>
   </div>
+
   <h3>Bets</h3>
   <div id="bets-list"></div>
+
   <h3>Leaderboard</h3>
   <div id="leaderboard"></div>
 </div>
 
 <script>
-// Storage
-if(!localStorage.users) localStorage.users = JSON.stringify({});
-if(!localStorage.bets) localStorage.bets = JSON.stringify([]);
+// ---------- STORAGE ----------
+if(!localStorage.users) localStorage.setItem("users", "{}");
+if(!localStorage.bets) localStorage.setItem("bets", "[]");
 
-// Default admin
-let users = JSON.parse(localStorage.users);
-if(!users["Danus"]) {
+// ---------- DEFAULT ADMIN ----------
+let users = JSON.parse(localStorage.getItem("users") || "{}");
+// Pokud admin neexistuje nebo nemá heslo, nastavíme ho
+if(!users["Danus"] || !users["Danus"].password){
   users["Danus"] = {coins:1000, admin:true, password:"Danus123"};
-  localStorage.users = JSON.stringify(users);
+  localStorage.setItem("users", JSON.stringify(users));
 }
 
-// Show login/register
+// ---------- SHOW LOGIN / REGISTER ----------
 function showRegister(){ document.getElementById("login-section").style.display="none"; document.getElementById("register-section").style.display="block"; }
 function showLogin(){ document.getElementById("register-section").style.display="none"; document.getElementById("login-section").style.display="block"; }
 
-// Register
+// ---------- REGISTRATION ----------
 function register(){
   const u=document.getElementById("reg-username").value.trim();
   const p=document.getElementById("reg-password").value;
-  if(!u || !p){ document.getElementById("reg-status").innerText="Fill all fields"; return; }
-  let users = JSON.parse(localStorage.users);
+  if(!u||!p){ document.getElementById("reg-status").innerText="Fill all fields"; return; }
+  let users=JSON.parse(localStorage.getItem("users"));
   if(users[u]){ document.getElementById("reg-status").innerText="Username taken"; return; }
-  users[u] = {coins:100, admin:false, password:p};
-  localStorage.users=JSON.stringify(users);
+  users[u]={coins:100, admin:false, password:p};
+  localStorage.setItem("users", JSON.stringify(users));
   document.getElementById("reg-status").innerText="Registered! Login now.";
 }
 
-// Login
+// ---------- LOGIN ----------
 let currentUser=null;
 function login(){
   const u=document.getElementById("login-username").value.trim();
   const p=document.getElementById("login-password").value;
-  let users = JSON.parse(localStorage.users);
+  let users=JSON.parse(localStorage.getItem("users"));
   if(!users[u]){ document.getElementById("login-status").innerText="User not found"; return; }
   if(users[u].password!==p){ document.getElementById("login-status").innerText="Wrong password"; return; }
 
@@ -101,18 +122,91 @@ function login(){
   document.getElementById("user-name").innerText=u;
   document.getElementById("coins").innerText=users[u].coins;
 
-  // Show admin only if admin
   document.getElementById("admin-section").style.display = users[u].admin ? "block" : "none";
 
   loadBets();
   loadLeaderboard();
 }
 
-// Simple bets/leaderboard (for demo)
-function loadBets(){ document.getElementById("bets-list").innerHTML="No bets yet"; }
-function addBet(){ alert("Add bet placeholder"); }
-function lockAllBets(){ alert("Lock all bets placeholder"); }
-function loadLeaderboard(){ document.getElementById("leaderboard").innerHTML="No leaderboard yet"; }
+// ---------- ADMIN FUNCTIONS ----------
+function addBet(){
+  if(!currentUser) return;
+  let users=JSON.parse(localStorage.getItem("users"));
+  if(!users[currentUser].admin){ alert("You are not admin"); return; }
+  const q=document.getElementById("new-question").value.trim();
+  const a1=document.getElementById("answer1").value.trim();
+  const a2=document.getElementById("answer2").value.trim();
+  if(!q||!a1||!a2){ alert("Fill all fields"); return; }
+  let bets=JSON.parse(localStorage.getItem("bets"));
+  bets.push({question:q, answers:[a1,a2], pool:[0,0], locked:false});
+  localStorage.setItem("bets", JSON.stringify(bets));
+  document.getElementById("new-question").value="";
+  document.getElementById("answer1").value="";
+  document.getElementById("answer2").value="";
+  loadBets();
+}
+
+function lockAllBets(){
+  if(!currentUser) return;
+  let users=JSON.parse(localStorage.getItem("users"));
+  if(!users[currentUser].admin){ alert("You are not admin"); return; }
+  let bets=JSON.parse(localStorage.getItem("bets"));
+  bets.forEach(b=>b.locked=true);
+  localStorage.setItem("bets", JSON.stringify(bets));
+  loadBets();
+}
+
+function setCoins(){
+  const uname=document.getElementById("set-coins-username").value.trim();
+  const val=parseInt(document.getElementById("set-coins-value").value);
+  if(!uname||isNaN(val)){ document.getElementById("set-coins-status").innerText="Fill username and coins!"; return; }
+  let users=JSON.parse(localStorage.getItem("users"));
+  if(!users[uname]){ document.getElementById("set-coins-status").innerText="User not found!"; return; }
+  users[uname].coins=val;
+  localStorage.setItem("users", JSON.stringify(users));
+  document.getElementById("set-coins-status").innerText=`Coins set for ${uname}!`;
+  if(currentUser===uname) document.getElementById("coins").innerText=val;
+  loadLeaderboard();
+}
+
+// ---------- BETS ----------
+function loadBets(){
+  let bets=JSON.parse(localStorage.getItem("bets"));
+  let html="";
+  bets.forEach((b,i)=>{
+    let btns="";
+    if(b.locked){ btns="<span>Locked</span>"; }
+    else { btns=b.answers.map((ans,j)=>`<button onclick="placeBet(${i},${j})">${ans} (10)</button>`).join(" "); }
+    html+=`<div><strong>${b.question}</strong> | ${btns} | Pool: ${b.pool.reduce((a,b)=>a+b,0)}</div>`;
+  });
+  document.getElementById("bets-list").innerHTML=html;
+}
+
+function placeBet(betIndex,answerIndex){
+  let users=JSON.parse(localStorage.getItem("users"));
+  let bets=JSON.parse(localStorage.getItem("bets"));
+  if(bets[betIndex].locked) return alert("This bet is locked!");
+  if(users[currentUser].coins<10) return alert("Not enough coins");
+  users[currentUser].coins-=10;
+  localStorage.setItem("users", JSON.stringify(users));
+  bets[betIndex].pool[answerIndex]+=10;
+  localStorage.setItem("bets", JSON.stringify(bets));
+  document.getElementById("coins").innerText=users[currentUser].coins;
+  loadBets();
+  loadLeaderboard();
+}
+
+// ---------- LEADERBOARD ----------
+function loadLeaderboard(){
+  let users=JSON.parse(localStorage.getItem("users"));
+  let arr=[];
+  for(let u in users){ arr.push({name:u, coins:users[u].coins}); }
+  arr.sort((a,b)=>b.coins-a.coins);
+  let html="<ol>";
+  arr.forEach(u=>{ html+=`<li>${u.name} - ${u.coins} coins</li>`; });
+  html+="</ol>";
+  document.getElementById("leaderboard").innerHTML=html;
+}
 </script>
 
 </div>
