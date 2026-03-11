@@ -1,350 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Class Gamba</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f3f3f3;
-display:flex;
-justify-content:center;
-}
-
-.container{
-background:white;
-width:650px;
-padding:30px;
-margin-top:40px;
-border-radius:10px;
-box-shadow:0 10px 25px rgba(0,0,0,0.1);
-}
-
-input{
-width:100%;
-padding:8px;
-margin:6px 0;
-}
-
-button{
-padding:8px 12px;
-background:#3498db;
-color:white;
-border:none;
-border-radius:5px;
-cursor:pointer;
-}
-
-button:hover{
-background:#2980b9;
-}
-
-#dashboard{display:none}
-#register{display:none}
-#admin{display:none}
-
-.bet{
-background:#eee;
-padding:10px;
-margin:10px 0;
-border-radius:6px;
-}
-
-</style>
-
+    <title>TŘÍDNÍ GAMBA</title>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <style>
+        body { background: #1a1a1a; color: #fff; font-family: sans-serif; text-align: center; }
+        .card { background: #333; padding: 20px; border-radius: 10px; margin: 10px auto; max-width: 400px; border: 1px solid gold; }
+        input { padding: 10px; margin: 5px; border-radius: 5px; border: none; }
+        button { background: gold; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .leaderboard { list-style: none; padding: 0; }
+        .user-row { background: #444; margin: 5px; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; }
+    </style>
 </head>
 <body>
 
-<div class="container">
-
-<h1>Class Gamba</h1>
-
-<div id="login">
-
-<h2>Login</h2>
-
-<input id="loginUser" placeholder="Username">
-<input id="loginPass" type="password" placeholder="Password">
-
-<button onclick="login()">Login</button>
-
-<p>No account? <a onclick="showRegister()">Register</a></p>
-
-<p id="loginMsg"></p>
-
-</div>
-
-<div id="register">
-
-<h2>Register</h2>
-
-<input id="regUser" placeholder="Username">
-<input id="regPass" type="password" placeholder="Password">
-
-<button onclick="register()">Register</button>
-
-<p><a onclick="showLogin()">Back</a></p>
-
-<p id="regMsg"></p>
-
-</div>
-
-<div id="dashboard">
-
-<h2>Welcome <span id="name"></span></h2>
-
-Coins: <span id="coins"></span>
-
-<div id="admin">
-
-<h3>Admin Panel</h3>
-
-<input id="q" placeholder="Question">
-<input id="a1" placeholder="Answer 1">
-<input id="a2" placeholder="Answer 2">
-
-<button onclick="addBet()">Add Bet</button>
-
-<h4>Set coins</h4>
-
-<input id="coinUser" placeholder="Username">
-<input id="coinValue" placeholder="Coins">
-
-<button onclick="setCoins()">Set Coins</button>
-
-</div>
-
-<h3>Bets</h3>
-
-<div id="bets"></div>
-
-<h3>Leaderboard</h3>
-
-<div id="leaderboard"></div>
-
-</div>
-
-</div>
-
-<script>
-
-const REPO_OWNER="Danus49"
-const REPO_NAME="Gamba"
-const FILE="data.json"
-const TOKEN="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"
-
-let users={}
-let bets=[]
-let sha=""
-let currentUser=""
-
-function showRegister(){
-document.getElementById("login").style.display="none"
-document.getElementById("register").style.display="block"
-}
-
-function showLogin(){
-document.getElementById("register").style.display="none"
-document.getElementById("login").style.display="block"
-}
-
-async function loadData(){
-
-let res=await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE}`)
-
-let data=await res.json()
-
-sha=data.sha
-
-let decoded=JSON.parse(atob(data.content))
-
-users=decoded.users
-bets=decoded.bets
-
-renderBets()
-renderLeaderboard()
-
-}
-
-async function saveData(){
-
-let content=btoa(JSON.stringify({
-users:users,
-bets:bets
-},null,2))
-
-await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE}`,{
-
-method:"PUT",
-
-headers:{
-Authorization:"token "+TOKEN
-},
-
-body:JSON.stringify({
-
-message:"update gamba data",
-
-content:content,
-
-sha:sha
-
-})
-
-})
-
-loadData()
-
-}
-
-function register(){
-
-let u=document.getElementById("regUser").value
-let p=document.getElementById("regPass").value
-
-if(users[u]){
-document.getElementById("regMsg").innerText="User exists"
-return
-}
-
-users[u]={coins:100,password:p,admin:false}
-
-saveData()
-
-document.getElementById("regMsg").innerText="Registered"
-
-}
-
-function login(){
-
-let u=document.getElementById("loginUser").value
-let p=document.getElementById("loginPass").value
-
-if(!users[u]){
-document.getElementById("loginMsg").innerText="User not found"
-return
-}
-
-if(users[u].password!==p){
-document.getElementById("loginMsg").innerText="Wrong password"
-return
-}
-
-currentUser=u
-
-document.getElementById("login").style.display="none"
-document.getElementById("dashboard").style.display="block"
-
-document.getElementById("name").innerText=u
-document.getElementById("coins").innerText=users[u].coins
-
-if(users[u].admin){
-document.getElementById("admin").style.display="block"
-}
-
-renderBets()
-renderLeaderboard()
-
-}
-
-function addBet(){
-
-let question=document.getElementById("q").value
-let ans1=document.getElementById("a1").value
-let ans2=document.getElementById("a2").value
-
-bets.push({
-question:question,
-answers:[ans1,ans2],
-pool:[0,0],
-locked:false
-})
-
-saveData()
-
-}
-
-function placeBet(i,a){
-
-if(users[currentUser].coins<10){
-alert("Not enough coins")
-return
-}
-
-users[currentUser].coins-=10
-
-bets[i].pool[a]+=10
-
-document.getElementById("coins").innerText=users[currentUser].coins
-
-saveData()
-
-}
-
-function renderBets(){
-
-let html=""
-
-bets.forEach((b,i)=>{
-
-html+=`
-<div class="bet">
-<b>${b.question}</b><br>
-<button onclick="placeBet(${i},0)">${b.answers[0]}</button>
-<button onclick="placeBet(${i},1)">${b.answers[1]}</button>
-</div>
-`
-
-})
-
-document.getElementById("bets").innerHTML=html
-
-}
-
-function renderLeaderboard(){
-
-let arr=[]
-
-for(let u in users){
-
-arr.push({name:u,coins:users[u].coins})
-
-}
-
-arr.sort((a,b)=>b.coins-a.coins)
-
-let html="<ol>"
-
-arr.forEach(p=>{
-
-html+=`<li>${p.name} - ${p.coins}</li>`
-
-})
-
-html+="</ol>"
-
-document.getElementById("leaderboard").innerHTML=html
-
-}
-
-function setCoins(){
-
-let u=document.getElementById("coinUser").value
-let v=parseInt(document.getElementById("coinValue").value)
-
-users[u].coins=v
-
-saveData()
-
-}
-
-loadData()
-
-setInterval(loadData,5000)
-
-</script>
-
+    <h1>💰 GAMBA ONLINE 💰</h1>
+
+    <div id="login-box" class="card">
+        <input type="text" id="nick" placeholder="Tvoje jméno">
+        <button onclick="login()">VSTOUPIT</button>
+    </div>
+
+    <div id="game-box" style="display:none;">
+        <div class="card">
+            <h2 id="my-name">---</h2>
+            <h3>Moje coiny: <span id="my-coins">0</span> 🪙</h3>
+            <button onclick="coinflip()">🎰 COINFLIP (Sázka 10)</button>
+            <button onclick="takeLoan()" style="background: #ff4444; color: white;">💸 PŮJČKA (100)</button>
+        </div>
+
+        <div class="card">
+            <h3>🏆 MĚSÍČNÍ LEADERBOARD</h3>
+            <div id="leaderboard"></div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializace databáze (připojí se k veřejnému "relayi")
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        const db = gun.get('tridni-gamba-v1'); 
+
+        let myNick = "";
+        let myData = { coins: 200 };
+
+        function login() {
+            myNick = document.getElementById('nick').value;
+            if(!myNick) return alert("Zadej jméno!");
+            
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('game-box').style.display = 'block';
+            document.getElementById('my-name').innerText = "Hráč: " + myNick;
+
+            // Připojíme se na data konkrétního hráče
+            db.get(myNick).on(data => {
+                if(data) {
+                    myData = data;
+                    document.getElementById('my-coins').innerText = data.coins;
+                } else {
+                    // Nový hráč
+                    db.get(myNick).put({ coins: 200 });
+                }
+            });
+        }
+
+        function coinflip() {
+            let win = Math.random() > 0.5;
+            let newBalance = win ? myData.coins + 10 : myData.coins - 10;
+            db.get(myNick).put({ coins: newBalance });
+            alert(win ? "VÝHRA! 🎉" : "PROHRA! 💀");
+        }
+
+        function takeLoan() {
+            db.get(myNick).put({ coins: myData.coins + 100 });
+            alert("Půjčeno 100 coinů! Nezapomeň je vrátit (nebo ne :D)");
+        }
+
+        // LEADERBOARD - Sleduje všechny hráče v reálném čase
+        db.map().on((data, key) => {
+            if(!data || !data.coins) return;
+            let rowId = 'row-' + key;
+            let row = document.getElementById(rowId);
+            if(!row) {
+                row = document.createElement('div');
+                row.id = rowId;
+                row.className = 'user-row';
+                document.getElementById('leaderboard').appendChild(row);
+            }
+            row.innerHTML = `<span>${key}</span> <strong>${data.coins} 🪙</strong>`;
+        });
+    </script>
 </body>
 </html>
