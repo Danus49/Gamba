@@ -8,16 +8,15 @@
     <style>
         :root { --gold: #f0b90b; --bg: #0b0e11; --card: #1e2329; --text: #eaecef; --red: #ff4444; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; margin: 10px; width: 95%; max-width: 450px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin: 10px; width: 95%; max-width: 450px; border: 1px solid #333; text-align: center; }
         .gold-border { border-color: var(--gold); }
         h1, h2, h3 { color: var(--gold); margin: 10px 0; }
-        input, select { background: #2b3139; border: 1px solid #474d57; color: white; padding: 10px; border-radius: 8px; width: calc(100% - 22px); margin: 5px 0; font-size: 14px; }
-        button { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; }
+        input { background: #2b3139; border: 1px solid #474d57; color: white; padding: 10px; border-radius: 8px; width: calc(100% - 22px); margin: 5px 0; }
+        button { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; }
         .btn-admin { background: var(--red); color: white; }
-        .user-row, .bet-item { background: #2b3139; margin: 5px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--gold); }
+        .user-row { background: #2b3139; margin: 5px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--gold); }
         #admin-panel { display: none; background: #2c0b0b; border: 1px solid var(--red); }
         .stats { font-size: 2em; font-weight: bold; color: var(--gold); }
-        .suggestion { font-size: 0.9em; background: #181a20; padding: 5px; margin: 5px; border-radius: 4px; border-left: 2px solid #555; }
     </style>
 </head>
 <body>
@@ -25,8 +24,8 @@
     <h1>💰 GAMBA ELITE 💰</h1>
 
     <div id="login-screen" class="card gold-border">
-        <input type="text" id="nick" placeholder="Tvoje jméno...">
-        <button onclick="login()">VSTOUPIT</button>
+        <input type="text" id="nick-input" placeholder="Tvoje jméno...">
+        <button onclick="login()">VSTOUPIT DO HRY</button>
     </div>
 
     <div id="game-screen" style="display:none; width: 100%; max-width: 450px;">
@@ -34,59 +33,41 @@
             <h2 id="display-nick">Hráč</h2>
             <div class="stats"><span id="display-coins">0</span> 🪙</div>
             <hr style="border:0.5px solid #333">
-            <h3>🎰 RYCHLÝ COINFLIP</h3>
+            <h3>🎰 COINFLIP (50/50)</h3>
             <input type="number" id="bet-amount" value="20">
-            <button onclick="coinflip()">HODIT MINCÍ (50/50)</button>
-        </div>
-
-        <div class="card">
-            <h3>📢 AKTUÁLNÍ SÁZKY OD ADMINA</h3>
-            <div id="active-bets-list">Žádné vypsané sázky...</div>
-        </div>
-
-        <div class="card">
-            <h3>💡 NAVRHNI SÁZKU</h3>
-            <input type="text" id="suggest-text" placeholder="Na co by se mělo sázet?">
-            <button onclick="sendSuggestion()" style="background:#474d57; color:white;">POSLAT NÁVRH ADMINOVI</button>
+            <button onclick="coinflip()">HODIT MINCÍ</button>
         </div>
 
         <div class="card">
             <h3>🏆 ŽEBŘÍČEK</h3>
-            <div id="leaderboard"></div>
+            <div id="leaderboard">Načítám sázkaře...</div>
         </div>
 
-        <button onclick="openAdmin()" style="background:transparent; color:#444; border:none; font-size:10px;">ADMIN PANEL</button>
+        <p style="color: #444; font-size: 10px; cursor: pointer;" onclick="openAdmin()">🔧 Admin Access</p>
     </div>
 
     <div id="admin-panel" class="card">
-        <h2 style="color:var(--red)">🛠 ADMIN KONZOLE (Danus)</h2>
-        
-        <h4>➕ PŘIPSAT COINY</h4>
-        <input type="text" id="adm-target" placeholder="Komu?">
+        <h2 style="color:var(--red)">🛠 ADMIN KONZOLE</h2>
+        <input type="text" id="adm-target" placeholder="Komu připsat?">
         <input type="number" id="adm-amt" placeholder="Kolik?">
-        <button onclick="adminAdd()" class="btn-admin">PŘIPSAT</button>
-
-        <h4>📢 VYPSAT NOVOU SÁZKU</h4>
-        <input type="text" id="new-bet-text" placeholder="Text sázky (např. Pepa dostane 5)">
-        <button onclick="adminCreateBet()" class="btn-admin">VYPSAT SÁZKU PRO VŠECHNY</button>
-
-        <h4>📥 NÁVRHY OD LIDÍ</h4>
-        <div id="admin-suggestions" style="text-align:left; font-size:0.8em;">Žádné návrhy...</div>
-
-        <button onclick="adminReset()" style="background:black; color:white; margin-top:20px;">💥 RESET VŠEHO (Všichni dostanou 200)</button>
+        <button onclick="adminAdd()" class="btn-admin">PŘIPSAT COINY</button>
+        <button onclick="adminReset()" style="background:black; color:white; margin-top:10px;">💥 RESET VŠEHO (200 start)</button>
         <button onclick="document.getElementById('admin-panel').style.display='none'">ZAVŘÍT</button>
     </div>
 
     <script>
-        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://gun-us.herokuapp.com/gun']);
-        const db = gun.get('tridni-gamba-v4-danus'); 
+        // Databáze
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        const db = gun.get('tridni-gamba-vFinal-Danus'); 
 
         let userNick = "";
         let userData = { coins: 0 };
 
+        // 1. OPRAVENÁ FUNKCE LOGIN
         function login() {
-            userNick = document.getElementById('nick').value.trim().toLowerCase();
-            if(userNick.length < 2) return alert("Krátký jméno!");
+            userNick = document.getElementById('nick-input').value.trim().toLowerCase();
+            if(userNick.length < 2) return alert("Nick je moc krátký!");
+            
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             document.getElementById('display-nick').innerText = userNick;
@@ -101,54 +82,59 @@
             });
         }
 
+        // 2. OPRAVENÁ FUNKCE COINFLIP
         function coinflip() {
             let bet = parseInt(document.getElementById('bet-amount').value);
-            if(isNaN(bet) || bet <= 0 || bet > userData.coins) return alert("Špatná sázka!");
+            if(isNaN(bet) || bet <= 0) return alert("Zadej normální sázku!");
+            if(bet > userData.coins) return alert("Tolik nemáš!");
+
             let win = Math.random() > 0.5;
-            db.get(userNick).put({ coins: userData.coins + (win ? bet : -bet) });
+            db.get(userNick).put({ coins: win ? userData.coins + bet : userData.coins - bet });
             alert(win ? "VÝHRA! 🎉" : "PROHRA! 💀");
         }
 
-        // --- SÁZKY A NÁVRHY ---
-        function sendSuggestion() {
-            let txt = document.getElementById('suggest-text').value;
-            if(!txt) return;
-            db.get('suggestions').get(Date.now()).put({ from: userNick, text: txt });
-            alert("Návrh poslán!");
-            document.getElementById('suggest-text').value = "";
-        }
-
-        function adminCreateBet() {
-            let txt = document.getElementById('new-bet-text').value;
-            if(!txt) return;
-            db.get('active_bets').get(Date.now()).put({ text: txt, open: true });
-            document.getElementById('new-bet-text').value = "";
-            alert("Sázka vypsána!");
-        }
-
-        // --- ADMIN LOGIKA ---
+        // 3. ADMIN FUNKCE
         function openAdmin() {
-            if(prompt("Heslo:") === "Danus123") document.getElementById('admin-panel').style.display = 'block';
+            if(prompt("Heslo:") === "Danus123") {
+                document.getElementById('admin-panel').style.display = 'block';
+            }
         }
 
         function adminAdd() {
-            let t = document.getElementById('adm-target').value;
+            let t = document.getElementById('adm-target').value.toLowerCase();
             let a = parseInt(document.getElementById('adm-amt').value);
+            if(!t || isNaN(a)) return alert("Chybí jméno nebo částka!");
+            
             db.get(t).once(d => {
                 let curr = (d && d.coins) ? d.coins : 0;
                 db.get(t).put({ nick: t, coins: curr + a });
+                alert("Připsáno!");
             });
         }
 
         function adminReset() {
-            if(confirm("Smazat vše? Všichni budou mít 200.")) {
+            if(confirm("Opravdu reset? Všichni dostanou 200.")) {
                 db.map().once((d, k) => {
-                    if(k === 'active_bets' || k === 'suggestions') db.get(k).put(null);
-                    else db.get(k).put({ nick: k, coins: 200 });
+                    db.get(k).put({ nick: k, coins: 200 });
                 });
+                alert("Resetováno!");
                 location.reload();
             }
         }
 
-        // --- SYNC ŽEBŘÍČKU A SÁZEK ---
-        db.map().on((data, key) =>
+        // 4. ŽEBŘÍČEK SYNC
+        db.map().on((data, key) => {
+            if(!data || data.coins === undefined || !data.nick) return;
+            let id = 'row-' + key;
+            let el = document.getElementById(id);
+            if(!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.className = 'user-row';
+                document.getElementById('leaderboard').appendChild(el);
+            }
+            el.innerHTML = `<span>${data.nick}</span> <strong>${data.coins} 🪙</strong>`;
+        });
+    </script>
+</body>
+</html>
