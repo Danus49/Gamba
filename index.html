@@ -3,181 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 TŘÍDNÍ GAMBA 💰</title>
+    <title>💰 TŘÍDNÍ GAMBA ELITE 💰</title>
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <style>
-        :root { --gold: #f0b90b; --bg: #0b0e11; --card: #1e2329; --text: #eaecef; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        
-        .card { background: var(--card); padding: 20px; border-radius: 12px; margin: 10px; width: 100%; max-width: 400px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; }
+        :root { --gold: #f0b90b; --bg: #0b0e11; --card: #1e2329; --text: #eaecef; --red: #ff4444; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin: 10px; width: 95%; max-width: 450px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; }
         .gold-border { border-color: var(--gold); }
-        
-        h1 { color: var(--gold); text-transform: uppercase; letter-spacing: 2px; }
-        input { background: #2b3139; border: 1px solid #474d57; color: white; padding: 12px; border-radius: 8px; width: calc(100% - 26px); margin: 10px 0; font-size: 16px; }
-        
-        button { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-size: 16px; }
-        button:hover { background: #d9a508; transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
-        .btn-admin { background: #ff4444; color: white; margin-top: 10px; }
-        
-        .user-row { background: #2b3139; margin: 8px 0; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--gold); }
-        .badge { background: var(--gold); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 10px; }
-        
-        #admin-panel { display: none; background: #2c0b0b; border: 1px solid #ff4444; }
-        .stats { font-size: 2.5em; font-weight: bold; color: var(--gold); margin: 15px 0; }
+        h1, h2, h3 { color: var(--gold); margin: 10px 0; }
+        input, select { background: #2b3139; border: 1px solid #474d57; color: white; padding: 10px; border-radius: 8px; width: calc(100% - 22px); margin: 5px 0; font-size: 14px; }
+        button { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin: 5px 0; }
+        .btn-admin { background: var(--red); color: white; }
+        .user-row, .bet-item { background: #2b3139; margin: 5px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--gold); }
+        #admin-panel { display: none; background: #2c0b0b; border: 1px solid var(--red); }
+        .stats { font-size: 2em; font-weight: bold; color: var(--gold); }
+        .suggestion { font-size: 0.9em; background: #181a20; padding: 5px; margin: 5px; border-radius: 4px; border-left: 2px solid #555; }
     </style>
 </head>
 <body>
 
-    <h1>💰 Třídní Gamba 💰</h1>
+    <h1>💰 GAMBA ELITE 💰</h1>
 
     <div id="login-screen" class="card gold-border">
-        <p>Zadej svoji přezdívku a začni sázet!</p>
         <input type="text" id="nick" placeholder="Tvoje jméno...">
-        <button onclick="login()">VSTOUPIT DO HRY</button>
+        <button onclick="login()">VSTOUPIT</button>
     </div>
 
     <div id="game-screen" style="display:none; width: 100%; max-width: 450px;">
         <div class="card gold-border">
             <h2 id="display-nick">Hráč</h2>
             <div class="stats"><span id="display-coins">0</span> 🪙</div>
-            
-            <div style="border-top: 1px solid #333; padding-top: 15px;">
-                <h3>🎰 COINFLIP (50/50)</h3>
-                <p>Vsaď si a zdvojnásob prachy!</p>
-                <input type="number" id="bet-amount" value="20" min="1">
-                <button onclick="coinflip()">HODIT MINCÍ</button>
-            </div>
+            <hr style="border:0.5px solid #333">
+            <h3>🎰 RYCHLÝ COINFLIP</h3>
+            <input type="number" id="bet-amount" value="20">
+            <button onclick="coinflip()">HODIT MINCÍ (50/50)</button>
         </div>
 
         <div class="card">
-            <h3>🏆 ŽEBŘÍČEK HRÁČŮ</h3>
-            <div id="leaderboard">Načítám sázkaře...</div>
+            <h3>📢 AKTUÁLNÍ SÁZKY OD ADMINA</h3>
+            <div id="active-bets-list">Žádné vypsané sázky...</div>
         </div>
 
-        <p style="color: #474d57; font-size: 0.8em; cursor: pointer;" onclick="openAdmin()">🔧 Admin Access</p>
+        <div class="card">
+            <h3>💡 NAVRHNI SÁZKU</h3>
+            <input type="text" id="suggest-text" placeholder="Na co by se mělo sázet?">
+            <button onclick="sendSuggestion()" style="background:#474d57; color:white;">POSLAT NÁVRH ADMINOVI</button>
+        </div>
+
+        <div class="card">
+            <h3>🏆 ŽEBŘÍČEK</h3>
+            <div id="leaderboard"></div>
+        </div>
+
+        <button onclick="openAdmin()" style="background:transparent; color:#444; border:none; font-size:10px;">ADMIN PANEL</button>
     </div>
 
     <div id="admin-panel" class="card">
-        <h2 style="color: #ff4444;">🛠 ADMIN KONZOLE</h2>
-        <input type="text" id="admin-target" placeholder="Komu připsat?">
-        <input type="number" id="admin-amount" placeholder="Kolik coinů?">
-        <button onclick="adminAdd()" class="btn-admin">PŘIPSAT COINY</button>
-        <button onclick="adminReset()" style="background: black; color: white; margin-top: 10px;">💥 RESET VŠEHO</button>
-        <button onclick="document.getElementById('admin-panel').style.display='none'" style="background:#444; margin-top: 5px;">Zavřít</button>
+        <h2 style="color:var(--red)">🛠 ADMIN KONZOLE (Danus)</h2>
+        
+        <h4>➕ PŘIPSAT COINY</h4>
+        <input type="text" id="adm-target" placeholder="Komu?">
+        <input type="number" id="adm-amt" placeholder="Kolik?">
+        <button onclick="adminAdd()" class="btn-admin">PŘIPSAT</button>
+
+        <h4>📢 VYPSAT NOVOU SÁZKU</h4>
+        <input type="text" id="new-bet-text" placeholder="Text sázky (např. Pepa dostane 5)">
+        <button onclick="adminCreateBet()" class="btn-admin">VYPSAT SÁZKU PRO VŠECHNY</button>
+
+        <h4>📥 NÁVRHY OD LIDÍ</h4>
+        <div id="admin-suggestions" style="text-align:left; font-size:0.8em;">Žádné návrhy...</div>
+
+        <button onclick="adminReset()" style="background:black; color:white; margin-top:20px;">💥 RESET VŠEHO (Všichni dostanou 200)</button>
+        <button onclick="document.getElementById('admin-panel').style.display='none'">ZAVŘÍT</button>
     </div>
 
     <script>
-        // Databáze Gun.js (Propojení více serverů pro stabilitu)
-        const gun = Gun([
-            'https://gun-manhattan.herokuapp.com/gun',
-            'https://gun-us.herokuapp.com/gun'
-        ]);
-        const db = gun.get('tridni-gamba-v3-final'); 
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://gun-us.herokuapp.com/gun']);
+        const db = gun.get('tridni-gamba-v4-danus'); 
 
         let userNick = "";
         let userData = { coins: 0 };
 
-        // --- LOGIN ---
         function login() {
-            userNick = document.getElementById('nick').value.trim();
-            if(userNick.length < 2) return alert("Nick musí mít aspoň 2 písmena!");
-            
+            userNick = document.getElementById('nick').value.trim().toLowerCase();
+            if(userNick.length < 2) return alert("Krátký jméno!");
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             document.getElementById('display-nick').innerText = userNick;
 
-            // Sledování dat uživatele v reálném čase
             db.get(userNick).on(data => {
                 if(data && typeof data.coins === 'number') {
                     userData = data;
                     document.getElementById('display-coins').innerText = data.coins;
                 } else {
-                    // Prvni login - dáme mu 200 coinů
                     db.get(userNick).put({ nick: userNick, coins: 200 });
                 }
             });
         }
 
-        // --- COINFLIP ---
         function coinflip() {
             let bet = parseInt(document.getElementById('bet-amount').value);
-            if(isNaN(bet) || bet <= 0) return alert("Napiš normální sázku!");
-            if(bet > userData.coins) return alert("Tolik nemáš, švorcáku!");
-
+            if(isNaN(bet) || bet <= 0 || bet > userData.coins) return alert("Špatná sázka!");
             let win = Math.random() > 0.5;
-            let finalChange = win ? bet : -bet;
-            
-            db.get(userNick).put({ coins: userData.coins + finalChange });
-            
-            if(win) alert("VÝHRA! 🎉 Připsáno " + bet + " coinů.");
-            else alert("PROHRA! 💀 Přišel jsi o " + bet + " coinů.");
+            db.get(userNick).put({ coins: userData.coins + (win ? bet : -bet) });
+            alert(win ? "VÝHRA! 🎉" : "PROHRA! 💀");
         }
 
-        // --- ADMIN FUNKCE ---
+        // --- SÁZKY A NÁVRHY ---
+        function sendSuggestion() {
+            let txt = document.getElementById('suggest-text').value;
+            if(!txt) return;
+            db.get('suggestions').get(Date.now()).put({ from: userNick, text: txt });
+            alert("Návrh poslán!");
+            document.getElementById('suggest-text').value = "";
+        }
+
+        function adminCreateBet() {
+            let txt = document.getElementById('new-bet-text').value;
+            if(!txt) return;
+            db.get('active_bets').get(Date.now()).put({ text: txt, open: true });
+            document.getElementById('new-bet-text').value = "";
+            alert("Sázka vypsána!");
+        }
+
+        // --- ADMIN LOGIKA ---
         function openAdmin() {
-            let p = prompt("Zadej admin heslo:");
-            if(p === "Danus123") {
-                document.getElementById('admin-panel').style.display = 'block';
-                window.scrollTo(0, document.body.scrollHeight);
-            } else {
-                alert("Smůla, nejsi admin.");
-            }
+            if(prompt("Heslo:") === "Danus123") document.getElementById('admin-panel').style.display = 'block';
         }
 
         function adminAdd() {
-            let target = document.getElementById('admin-target').value;
-            let amt = parseInt(document.getElementById('admin-amount').value);
-            if(!target || isNaN(amt)) return alert("Vyplň oboje!");
-
-            db.get(target).once(d => {
-                let current = (d && d.coins) ? d.coins : 0;
-                db.get(target).put({ nick: target, coins: current + amt });
-                alert("Hotovo! " + target + " dostal " + amt);
+            let t = document.getElementById('adm-target').value;
+            let a = parseInt(document.getElementById('adm-amt').value);
+            db.get(t).once(d => {
+                let curr = (d && d.coins) ? d.coins : 0;
+                db.get(t).put({ nick: t, coins: curr + a });
             });
         }
 
         function adminReset() {
-            if(confirm("Vážně chceš smazat úplně všechna data?")) {
-                db.map().once((d, k) => db.get(k).put(null));
-                alert("Vybuchlo to. Refreshni stránku.");
+            if(confirm("Smazat vše? Všichni budou mít 200.")) {
+                db.map().once((d, k) => {
+                    if(k === 'active_bets' || k === 'suggestions') db.get(k).put(null);
+                    else db.get(k).put({ nick: k, coins: 200 });
+                });
                 location.reload();
             }
         }
 
-        // --- ŽEBŘÍČEK (Sync pro všechny) ---
-        db.map().on((data, key) => {
-            if(!data || data.coins === undefined || !data.nick) return;
-            
-            let id = 'row-' + key;
-            let el = document.getElementById(id);
-            if(!el) {
-                el = document.createElement('div');
-                el.id = id;
-                el.className = 'user-row';
-                document.getElementById('leaderboard').appendChild(el);
-            }
-
-            let rank = "Greenhorn";
-            if(data.coins > 1000) rank = "Hazardér";
-            if(data.coins > 5000) rank = "Bohatýr";
-            if(data.coins > 20000) rank = "Gamba King";
-
-            el.innerHTML = `
-                <span><strong>${data.nick}</strong> <span class="badge">${rank}</span></span>
-                <strong>${data.coins} 🪙</strong>
-            `;
-            
-            // Seřazení žebříčku (jednoduché)
-            let board = document.getElementById('leaderboard');
-            let rows = Array.from(board.children);
-            rows.sort((a, b) => {
-                let valA = parseInt(a.getElementsByTagName('strong')[1].innerText);
-                let valB = parseInt(b.getElementsByTagName('strong')[1].innerText);
-                return valB - valA;
-            });
-            rows.forEach(row => board.appendChild(row));
-        });
-    </script>
-</body>
-</html>
+        // --- SYNC ŽEBŘÍČKU A SÁZEK ---
+        db.map().on((data, key) =>
